@@ -1,16 +1,12 @@
+from keras import Sequential
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
-import pandas as pd
+from tensorflow.keras.layers import Dense
+
 
 # Завантаження датасету Iris
 iris = load_iris()
-
-# Створення DataFrame з даних та виведення перших рядків
-df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
 
 # Розділення даних на навчальний та тестовий набори
 X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.2, random_state=42)
@@ -20,27 +16,36 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# print("Test scaled:")
-# print(X_test_scaled[:5])
-# print("Train scaled:")
-# print(X_train_scaled[:5])
+# Побудова моделі нейронної мережі
+model = Sequential([
+    Dense(10, activation='relu', input_shape=(4,)),
+    Dense(5, activation='relu'),
+    Dense(3, activation='softmax')
+])
 
-# Тренування логістичної регресії
-logistic_reg = LogisticRegression(max_iter=1000)
-logistic_reg.fit(X_train_scaled, y_train)
+# Компіляція моделі
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-# Тренування методу опорних векторів (SVM)
-svm = SVC(kernel='linear')
-svm.fit(X_train_scaled, y_train)
+# Тренування моделі
+history = model.fit(X_train_scaled, y_train, epochs=50, batch_size=4, validation_split=0.1)
 
-# Оцінка логістичної регресії
-y_pred_logreg = logistic_reg.predict(X_test_scaled)
-accuracy_logreg = accuracy_score(y_test, y_pred_logreg)
-print("Accuracy of Logistic Regression:", accuracy_logreg)
+# Оцінка моделі на тестовому наборі
+test_loss, test_acc = model.evaluate(X_test_scaled, y_test)
+print('Test accuracy:', test_acc)
 
-# Оцінка методу опорних векторів (SVM)
-y_pred_svm = svm.predict(X_test_scaled)
-accuracy_svm = accuracy_score(y_test, y_pred_svm)
-print("Accuracy of SVM:", accuracy_svm)
+import matplotlib.pyplot as plt
 
+# Графіки залежності втрат та точності
+plt.plot(history.history['accuracy'], label='accuracy')
+plt.plot(history.history['val_accuracy'], label='val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(loc='lower right')
+plt.show()
 
+plt.plot(history.history['loss'], label='loss')
+plt.plot(history.history['val_loss'], label='val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend(loc='upper right')
+plt.show()
